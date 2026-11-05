@@ -36,6 +36,10 @@ class SubmissionIdentityError(ValueError):
     """Raised when submission identity metadata is inconsistent."""
 
 
+class MalformedSubmissionError(SubmissionIdentityError):
+    """Raised when the submission is structurally broken (not a real identity mismatch)."""
+
+
 def _normalize_identity(value):
     return str(value or '').strip().casefold()
 
@@ -44,13 +48,13 @@ def _submission_identity_parts(lab_filename):
     filename = os.path.basename(lab_filename or '')
     parts = filename.split('.')
     if len(parts) < 3 or parts[-1].lower() != 'lab':
-        raise SubmissionIdentityError('submission filename must end with .lab')
+        raise MalformedSubmissionError('submission filename must end with .lab')
 
     outer_email_labname = '.'.join(parts[:-1])
     lab_id = parts[-2]
     student_id = '.'.join(parts[:-2])
     if not student_id or not lab_id:
-        raise SubmissionIdentityError('submission filename has no student or lab identity')
+        raise MalformedSubmissionError('submission filename has no student or lab identity')
     return outer_email_labname, lab_id, student_id
 
 
@@ -60,12 +64,12 @@ def _read_nested_student_id(nested_zip):
         if name.replace('\\\\', '/').lstrip('/') == '.local/.email'
     ]
     if len(email_members) != 1:
-        raise SubmissionIdentityError('nested archive must contain exactly one .local/.email')
+        raise MalformedSubmissionError('nested archive must contain exactly one .local/.email')
 
     with nested_zip.open(email_members[0], 'r') as email_file:
         student_id = email_file.read().decode('utf-8', errors='strict').strip()
     if not student_id or not all(c in string.printable for c in student_id):
-        raise SubmissionIdentityError('nested .local/.email is missing or invalid')
+        raise MalformedSubmissionError('nested .local/.email is missing or invalid')
     return student_id.replace('@', '_at_')
 
 
@@ -88,10 +92,10 @@ def validate_submission_identity(lab_filename, expected_student_id=None, expecte
                 continue
             nested_stem = nested_name[:-4]
             if '=' not in nested_stem:
-                raise SubmissionIdentityError('nested archive has malformed identity name')
+                raise MalformedSubmissionError('nested archive has malformed identity name')
             nested_email_labname, container_name = nested_stem.rsplit('=', 1)
             if not nested_email_labname or not container_name:
-                raise SubmissionIdentityError('nested archive has malformed identity name')
+                raise MalformedSubmissionError('nested archive has malformed identity name')
             if _normalize_identity(nested_email_labname) != _normalize_identity(outer_email_labname):
                 raise SubmissionIdentityError('nested archive identity does not match outer filename')
 
@@ -107,7 +111,7 @@ def validate_submission_identity(lab_filename, expected_student_id=None, expecte
             nested_count += 1
 
     if nested_count == 0:
-        raise SubmissionIdentityError('submission contains no student container archive')
+        raise MalformedSubmissionError('submission contains no student container archive')
     return outer_email_labname, lab_id, outer_student_id
 
 
@@ -388,10 +392,19 @@ def instructor_grade_lab(lab_filename, expected_student_id=None, expected_lab_id
             expected_student_id=expected_student_id,
             expected_lab_id=expected_lab_id,
         )
-    except (OSError, ValueError, zipfile.BadZipFile, SubmissionIdentityError) as exc:
-        logger.warning('Rejected submission identity for %s: %s' % (lab_filename, exc))
+    except SubmissionIdentityError as exc:
+        # Chi lech ma sinh vien / ma lab that moi la identity; loi cau truc tach rieng.
+        structural = isinstance(exc, MalformedSubmissionError)
+        logger.warning('Rejected submission %s for %s: %s' % ('structure' if structural else 'identity', lab_filename, exc))
         return {
-            'error': 'invalid_submission_identity',
+            'error': 'invalid_submission_structure' if structural else 'invalid_submission_identity',
+            'detail': str(exc),
+        }
+    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+        # zip hong, .email khong doc duoc UTF-8, ... => file sai cau truc
+        logger.warning('Rejected malformed submission %s: %s' % (lab_filename, exc))
+        return {
+            'error': 'invalid_submission_structure',
             'detail': str(exc),
         }
     # Enable watermark-based integrity checks.

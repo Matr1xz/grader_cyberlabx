@@ -46,6 +46,29 @@ if __name__ == '__main__':  # Windows spawn re-import main module
         assert code(post(c, data=b'not a zip')) == 'INVALID_LAB_FILE'
         assert code(post(c, name='B23DCAT314.no-such-lab.lab')) in {'LAB_NOT_FOUND', 'IDENTITY_MISMATCH'}
 
+        # Sai cấu trúc => INVALID_LAB_FILE, không phải IDENTITY_MISMATCH (bên tích hợp tính là CPY)
+        def rezip(drop_email=False, rename=None):
+            src, buf = zipfile.ZipFile(io.BytesIO(DATA)), io.BytesIO()
+            with zipfile.ZipFile(buf, 'w') as out:
+                for i in src.infolist():
+                    b = src.read(i)
+                    if drop_email and i.filename.endswith('.zip') and i.filename != 'docs.zip':
+                        inner_src, inner = zipfile.ZipFile(io.BytesIO(b)), io.BytesIO()
+                        with zipfile.ZipFile(inner, 'w') as zz:
+                            for k in inner_src.infolist():
+                                if k.filename != '.local/.email':
+                                    zz.writestr(k, inner_src.read(k))
+                        b = inner.getvalue()
+                    out.writestr(rename(i.filename) if rename and i.filename.endswith('.zip') else i.filename, b)
+            return buf.getvalue()
+        empty = io.BytesIO(); zipfile.ZipFile(empty, 'w').writestr('readme.txt', b'x')
+        for bad in (empty.getvalue(), rezip(drop_email=True), rezip(rename=lambda n: n.replace('=', '_'))):
+            assert code(post(c, data=bad)) == 'INVALID_LAB_FILE'
+        assert code(post(c, name='nodots.lab')) == 'INVALID_LAB_FILE'
+        # Lệch danh tính thật vẫn là IDENTITY_MISMATCH
+        assert code(post(c, name='B23DCAT999.ops-backup3.lab')) == 'IDENTITY_MISMATCH'
+        assert code(post(c, lab_id='other-lab')) == 'IDENTITY_MISMATCH'
+
         # Zip bomb: một mục khai báo 300 MB (nén ~300 KB)
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:

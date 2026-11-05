@@ -74,6 +74,8 @@ def skipped_containers(path):
 def to_response(raw, path):
     if isinstance(raw, dict) and raw.get('error') == 'invalid_submission_identity':
         return error(400, 'IDENTITY_MISMATCH', MSG_IDENTITY, detail=raw.get('detail', ''))
+    if isinstance(raw, dict) and raw.get('error') == 'invalid_submission_structure':
+        return error(400, 'INVALID_LAB_FILE', MSG_INVALID, detail=raw.get('detail', ''))
     if raw == 'wrong_input_file':
         return error(400, 'LAB_NOT_FOUND', MSG_LAB_NOT_FOUND)
     if not isinstance(raw, dict) or not raw:

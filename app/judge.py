@@ -178,8 +178,8 @@ def _grade_solution(solution, filepath):
             logger.error('An exception occurred for instructor_grade_lab(filepath)\n%s', tb)
             _log_failure(solution, repr(e), tb)
             result = 'An exception occurred'
-        if isinstance(result, dict) and result.get('error') == 'invalid_submission_identity':
-            detail = '[{"output": "' + str(result.get('detail', 'Invalid submission identity.')) + '", "input_file": "invalid_submission_identity", "status": ' + str(STATUS_WFN) + '}]'
+        if isinstance(result, dict) and result.get('error') in ('invalid_submission_identity', 'invalid_submission_structure'):
+            detail = '[{"output": "' + str(result.get('detail', 'Invalid submission.')) + '", "input_file": "' + result['error'] + '", "status": ' + str(STATUS_WFN) + '}]'
         else:
             detail = _parse_grade_data(result)
 
