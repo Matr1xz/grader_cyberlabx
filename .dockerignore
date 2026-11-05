@@ -1,0 +1,7 @@
+**/__pycache__/
+app/tmp/
+app/.local/
+**/*.log
+**/*.bak
+**/*.bak_*
+graphify-out/

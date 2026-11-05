@@ -1,0 +1,8 @@
+__pycache__/
+tmp/
+*.log
+*.bak
+*.bak_*
+graphify-out/
+# pregrade sync từ GitHub lúc chạy (start.sh), không commit 2.8GB
+app/.local/
