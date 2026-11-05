@@ -453,8 +453,8 @@
                 alert('Chỉ chấp nhận file .lab hoặc .zib!');
                 return;
             }
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File quá lớn! Tối đa 10MB.');
+            if (file.size > 2048 * 1024 * 1024) {
+                alert('File quá lớn! Tối đa 2GB.');
                 return;
             }
             selectedFile = file;

@@ -3,7 +3,7 @@ Thay cho judge.py (pull bài từ server). Lõi chấm giữ nguyên, xem grade_
 
 Chạy:  uvicorn app:app --host 0.0.0.0 --port 5000
 Env:   GRADE_QUEUE_WORKERS (mặc định 1), GRADE_QUEUE_MAX_SIZE (100), GRADE_QUEUE_ENQUEUE_TIMEOUT_SECONDS (5),
-       GRADE_QUEUE_RESULT_TIMEOUT_SECONDS (240), GRADE_MAX_UPLOAD_MB (100), GRADE_CLEANUP_ARTIFACTS (true),
+       GRADE_QUEUE_RESULT_TIMEOUT_SECONDS (240), GRADE_MAX_UPLOAD_MB (2048), GRADE_MAX_UNZIPPED_MB (2048), GRADE_CLEANUP_ARTIFACTS (true),
        GRADER_TOKEN (nếu đặt thì bắt buộc header Authorization: Bearer <token>)
 """
 import asyncio
@@ -43,7 +43,7 @@ WORKERS = _env_int('GRADE_QUEUE_WORKERS', 1)
 QUEUE_MAX_SIZE = _env_int('GRADE_QUEUE_MAX_SIZE', 100)
 ENQUEUE_TIMEOUT = _env_int('GRADE_QUEUE_ENQUEUE_TIMEOUT_SECONDS', 5)
 RESULT_TIMEOUT = _env_int('GRADE_QUEUE_RESULT_TIMEOUT_SECONDS', 240)
-MAX_UPLOAD_BYTES = _env_int('GRADE_MAX_UPLOAD_MB', 100) * 1024 * 1024
+MAX_UPLOAD_BYTES = _env_int('GRADE_MAX_UPLOAD_MB', 2048) * 1024 * 1024
 CLEANUP = os.getenv('GRADE_CLEANUP_ARTIFACTS', 'true').strip().lower() not in {'0', 'false', 'no', 'off'}
 TOKEN = os.getenv('GRADER_TOKEN') or None
 

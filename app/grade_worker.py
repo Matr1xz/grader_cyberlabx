@@ -13,7 +13,7 @@ os.chdir(BASE_DIR)  # instructor_grade dùng os.getcwd() để tìm .local/pregr
 import instructor_grade  # noqa: E402
 import parsing_grade  # noqa: E402
 
-MAX_UNZIPPED_BYTES = int(os.getenv('GRADE_MAX_UNZIPPED_MB', '200')) * 1024 * 1024
+MAX_UNZIPPED_BYTES = int(os.getenv('GRADE_MAX_UNZIPPED_MB', '2048')) * 1024 * 1024
 MAX_ZIP_ENTRIES = int(os.getenv('GRADE_MAX_ZIP_ENTRIES', '20000'))
 
 MSG_INVALID = 'Không thể chấm điểm. File có thể bị lỗi hoặc không đúng định dạng.'

@@ -6,6 +6,8 @@ import sys
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 
+os.environ.setdefault('GRADE_MAX_UNZIPPED_MB', '200')  # giữ test zip bomb 300 MB nhanh; mặc định thật 2048
+
 from fastapi.testclient import TestClient
 
 import app
